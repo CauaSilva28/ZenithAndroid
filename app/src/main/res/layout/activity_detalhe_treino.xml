@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#050505"
+    tools:context=".DetalheTreino">
+
+    <!-- CABEÇALHO -->
+    <LinearLayout
+        android:id="@+id/headerDetalhe"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <Button
+            android:id="@+id/btnVoltarDetalhe"
+            android:layout_width="120dp"
+            android:layout_height="48dp"
+            android:backgroundTint="#1A1A1A"
+            android:text="Voltar"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvTituloDetalhe"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="Detalhe do Treino"
+            android:textColor="#FFFFFF"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <View
+        android:id="@+id/linhaDivisoria"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#252525"
+        app:layout_constraintTop_toBottomOf="@+id/headerDetalhe" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linhaDivisoria">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- CARTÃO DE RESUMO -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:background="#1A1A1A"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/tvDataDetalhe"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Data: 12/04/2026"
+                    android:textColor="#AAAAAA"
+                    android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/tvStatusDetalhe"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="#2D3A0A"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="4dp"
+                    android:text="PENDENTE"
+                    android:textColor="#85A000"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- TÍTULO EXERCÍCIOS -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:text="LISTA DE EXERCÍCIOS"
+                android:textColor="#85A000"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <!-- CONTENTOR DINÂMICO PARA AS CHECKBOXES (RF18) -->
+            <LinearLayout
+                android:id="@+id/containerExerciciosChecklist"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:orientation="vertical" />
+
+            <!-- OBSERVAÇÕES E FEEDBACK (RF19) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="OBSERVAÇÕES DO TREINO"
+                android:textColor="#85A000"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/etObservacoesDetalhe"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:layout_marginBottom="32dp"
+                android:background="#1A1A1A"
+                android:gravity="top|start"
+                android:hint="Como correu o treino? Anote aqui cargas e feedback."
+                android:inputType="textMultiLine"
+                android:padding="16dp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#777777" />
+
+            <!-- BOTÃO FINALIZAR -->
+            <Button
+                android:id="@+id/btnConcluirTreino"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:layout_marginBottom="24dp"
+                android:backgroundTint="#85A000"
+                android:text="MARCAR COMO CONCLUÍDO"
+                android:textColor="#050505"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <!-- Adicione isto logo abaixo do botão btnConcluirTreino -->
+            <Button
+                android:id="@+id/btnExcluirTreino"
+                android:layout_width="match_parent"
+                android:layout_height="60dp"
+                android:backgroundTint="#260400"
+                android:text="EXCLUIR TREINO"
+                android:textColor="#FF5555"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

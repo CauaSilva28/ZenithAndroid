@@ -16,8 +16,8 @@ data class Treino(
     val titulo: String,
     val data: String,
     val exercicios: List<String>,
-    val concluido: Boolean = false,
-    val observacoes: String = ""
+    var concluido: Boolean = false,
+    var observacoes: String = ""
 )
 
 object DadosGlobais {

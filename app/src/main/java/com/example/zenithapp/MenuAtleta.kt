@@ -1,6 +1,7 @@
 package com.example.zenithapp
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.Button
@@ -12,10 +13,14 @@ class MenuAtleta : AppCompatActivity() {
 
     private lateinit var containerTreinos: LinearLayout
     private lateinit var atletaLogado: Atleta
+    private lateinit var db: DatabaseHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_menu_atleta)
+
+        // 1. Inicializar o banco de dados SQLite
+        db = DatabaseHelper(this)
 
         val btnSairAtleta = findViewById<Button>(R.id.btnSairAtleta)
         containerTreinos = findViewById(R.id.containerTreinosAtleta)
@@ -23,26 +28,25 @@ class MenuAtleta : AppCompatActivity() {
         val tvNomeAtleta = findViewById<TextView>(R.id.tvNomeAtleta)
         val tvDetalhesAtleta = findViewById<TextView>(R.id.tvDetalhesAtleta)
 
-        // 1. Receber o ID de quem fez login
+        // 2. Receber o ID de quem fez login e buscar no SQLite
         val idAtleta = intent.getStringExtra("ATLETA_ID") ?: ""
-        val atletaEncontrado = DadosGlobais.buscarAtletaPorId(idAtleta)
+        val atletaEncontrado = db.buscarAtletaPorId(idAtleta)
 
         if (atletaEncontrado == null) {
-            // Se algo der errado, expulsa de volta para o login
+            // Se não encontrar no banco, desloga por segurança
             val intent = Intent(this, Login::class.java)
             startActivity(intent)
             finish()
             return
         }
 
-        // Define o atleta logado com base nos dados reais do login
         atletaLogado = atletaEncontrado
 
-        // 2. Preencher o Resumo do Perfil (RF16)
+        // 3. Preencher o Resumo do Perfil (RF16)
         tvNomeAtleta.text = "Olá, ${atletaLogado.nome}"
         tvDetalhesAtleta.text = "Altura: ${atletaLogado.altura}m | Peso: ${atletaLogado.peso}kg"
 
-        // 3. RF05 - Logout
+        // 4. RF05 - Logout
         btnSairAtleta.setOnClickListener {
             val intent = Intent(this, Login::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
@@ -51,7 +55,6 @@ class MenuAtleta : AppCompatActivity() {
         }
     }
 
-    // Usamos o onResume para atualizar a lista sempre que o atleta voltar do Detalhe do Treino
     override fun onResume() {
         super.onResume()
         atualizarListaDeTreinosDoAtleta()
@@ -60,13 +63,13 @@ class MenuAtleta : AppCompatActivity() {
     private fun atualizarListaDeTreinosDoAtleta() {
         containerTreinos.removeAllViews()
 
-        // Filtrar apenas os treinos deste atleta específico
-        val meusTreinos = DadosGlobais.listaTreinos.filter { it.idAtleta == atletaLogado.id }
+        // Busca apenas os treinos vinculados a este atleta no SQLite
+        val meusTreinos = db.listarTreinosDoAtleta(atletaLogado.id)
 
         if (meusTreinos.isEmpty()) {
             val tvVazio = TextView(this)
             tvVazio.text = "Ainda não tem treinos programados."
-            tvVazio.setTextColor(android.graphics.Color.parseColor("#AAAAAA"))
+            tvVazio.setTextColor(Color.parseColor("#AAAAAA"))
             tvVazio.textSize = 14f
             containerTreinos.addView(tvVazio)
             return
@@ -86,18 +89,18 @@ class MenuAtleta : AppCompatActivity() {
 
             if (treino.concluido) {
                 tvStatus.text = "Concluído"
-                tvStatus.setTextColor(android.graphics.Color.parseColor("#050505"))
-                tvStatus.setBackgroundColor(android.graphics.Color.parseColor("#85A000"))
+                tvStatus.setTextColor(Color.parseColor("#050505"))
+                tvStatus.setBackgroundColor(Color.parseColor("#85A000"))
             } else {
                 tvStatus.text = "Pendente"
-                tvStatus.setTextColor(android.graphics.Color.parseColor("#85A000"))
-                tvStatus.setBackgroundColor(android.graphics.Color.parseColor("#2D3A0A"))
+                tvStatus.setTextColor(Color.parseColor("#85A000"))
+                tvStatus.setBackgroundColor(Color.parseColor("#2D3A0A"))
             }
 
             viewCartaoTreino.setOnClickListener {
                 val intent = Intent(this, DetalheTreino::class.java)
                 intent.putExtra("TREINO_ID", treino.id)
-                intent.putExtra("MODO_VISUALIZACAO", "ATLETA") // Avisa que é o atleta
+                intent.putExtra("MODO_VISUALIZACAO", "ATLETA")
                 startActivity(intent)
             }
 

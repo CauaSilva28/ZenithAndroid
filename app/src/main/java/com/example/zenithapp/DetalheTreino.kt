@@ -3,12 +3,14 @@ package com.example.zenithapp
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
 class DetalheTreino : AppCompatActivity() {
@@ -17,8 +19,9 @@ class DetalheTreino : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_detalhe_treino)
 
-        // 1. Receber o ID do treino clicado
+        // 1. Receber os extras da Intent
         val idTreino = intent.getStringExtra("TREINO_ID") ?: ""
+        val modoAtleta = intent.getStringExtra("MODO_VISUALIZACAO") == "ATLETA"
 
         if (idTreino.isEmpty()) {
             Toast.makeText(this, "Erro: Treino não identificado.", Toast.LENGTH_SHORT).show()
@@ -26,16 +29,17 @@ class DetalheTreino : AppCompatActivity() {
             return
         }
 
-        // 2. Localizar o treino específico na lista global
-        val treino = DadosGlobais.listaTreinos.find { it.id == idTreino }
+        // 2. Instanciar o Banco de Dados e buscar o treino direto do SQLite
+        val db = DatabaseHelper(this)
+        val treino = db.buscarTreinoPorId(idTreino)
 
         if (treino == null) {
-            Toast.makeText(this, "Erro: Treino não encontrado no sistema.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Erro: Treino não encontrado no banco de dados.", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
 
-        // 3. Mapear os elementos visuais
+        // 3. Mapear os elementos visuais da tela
         val btnVoltar = findViewById<Button>(R.id.btnVoltarDetalhe)
         val tvTitulo = findViewById<TextView>(R.id.tvTituloDetalhe)
         val tvData = findViewById<TextView>(R.id.tvDataDetalhe)
@@ -45,17 +49,15 @@ class DetalheTreino : AppCompatActivity() {
         val btnConcluir = findViewById<Button>(R.id.btnConcluirTreino)
         val btnExcluirTreino = findViewById<Button>(R.id.btnExcluirTreino)
 
-        val modoAtleta = intent.getStringExtra("MODO_VISUALIZACAO") == "ATLETA"
-
         // Se quem abriu foi o atleta, esconde o botão de excluir
         if (modoAtleta) {
-            btnExcluirTreino.visibility = android.view.View.GONE
+            btnExcluirTreino.visibility = View.GONE
         }
 
         // 4. Preencher os dados do cabeçalho
         tvTitulo.text = treino.titulo
         tvData.text = "Data: ${treino.data}"
-        etObservacoes.setText(treino.observacoes) // Carrega as observações já existentes, se houver
+        etObservacoes.setText(treino.observacoes)
 
         if (treino.concluido) {
             tvStatus.text = "CONCLUÍDO"
@@ -64,23 +66,19 @@ class DetalheTreino : AppCompatActivity() {
             btnConcluir.text = "SALVAR ALTERAÇÕES"
         }
 
-        // 5. Gerar as CheckBoxes dinamicamente para cada exercício (RF18)
+        // 5. Gerar as CheckBoxes dinamicamente para os exercícios vindos do SQLite (RF18)
         for (exercicio in treino.exercicios) {
             val checkBox = CheckBox(this)
             checkBox.text = exercicio
             checkBox.setTextColor(Color.WHITE)
             checkBox.textSize = 16f
             checkBox.setPadding(16, 16, 16, 16)
-
-            // Define a cor da "caixinha" de seleção para o verde lima do Zenith
             checkBox.buttonTintList = ColorStateList.valueOf(Color.parseColor("#85A000"))
 
-            // Se o treino já estava concluído, deixamos as caixas marcadas
             if (treino.concluido) {
                 checkBox.isChecked = true
             }
 
-            // Adiciona a CheckBox ao ecrã
             containerExercicios.addView(checkBox)
         }
 
@@ -89,30 +87,27 @@ class DetalheTreino : AppCompatActivity() {
             finish()
         }
 
-        // 6. Ação de Concluir / Salvar Treino
+        // 6. Salvar Alterações / Concluir Treino (RF18 e RF19)
         btnConcluir.setOnClickListener {
-            // Atualiza o estado do treino na memória (certifique-se que no DadosGlobais.kt são 'var')
-            treino.concluido = true
-            treino.observacoes = etObservacoes.text.toString().trim()
-
+            val obsTexto = etObservacoes.text.toString().trim()
+            db.atualizarConclusaoTreino(idTreino, true, obsTexto)
             Toast.makeText(this, "Treino atualizado com sucesso!", Toast.LENGTH_SHORT).show()
-            finish() // Retorna ao Perfil do Atleta (ou Menu)
+            finish()
         }
 
+        // 7. Excluir Treino com Confirmação (RF13)
         btnExcluirTreino.setOnClickListener {
-            val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+            val builder = AlertDialog.Builder(this)
             builder.setTitle("Excluir Treino")
             builder.setMessage("Tem certeza que deseja excluir o treino '${treino.titulo}'?")
 
-            builder.setPositiveButton("Excluir") { dialog, which ->
-                // Remove o treino da lista global
-                DadosGlobais.listaTreinos.removeAll { it.id == idTreino }
-
+            builder.setPositiveButton("Excluir") { _, _ ->
+                db.excluirTreino(idTreino)
                 Toast.makeText(this, "Treino excluído.", Toast.LENGTH_SHORT).show()
-                finish() // Fecha a tela de detalhe e volta para o perfil do atleta
+                finish()
             }
 
-            builder.setNegativeButton("Cancelar") { dialog, which ->
+            builder.setNegativeButton("Cancelar") { dialog, _ ->
                 dialog.dismiss()
             }
 

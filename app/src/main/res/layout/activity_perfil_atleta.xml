@@ -103,6 +103,49 @@
                     android:text="Especialidade: --"
                     android:textColor="#AAAAAA"
                     android:textSize="16sp" />
+
+                <TextView
+                    android:id="@+id/tvPosicao"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Especialidade: --"
+                    android:textColor="#AAAAAA"
+                    android:textSize="16sp" />
+
+                <!-- LINHA DIVISÓRIA INTERNA -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="12dp"
+                    android:background="#333333" />
+
+                <!-- CREDENCIAIS DE ACESSO DO ATLETA -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ACESSO AO APLICATIVO"
+                    android:textColor="#85A000"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvUsuarioAtleta"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Usuário: --"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvSenhaAtleta"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Senha: --"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp" />
             </LinearLayout>
 
             <!-- SESSÃO DE TREINOS -->

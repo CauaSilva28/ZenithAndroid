@@ -28,44 +28,44 @@ class Login : AppCompatActivity() {
         val btnEntrar = findViewById<Button>(R.id.btnEntrar)
         val tvErroLogin = findViewById<TextView>(R.id.tvErroLogin)
 
+        val db = DatabaseHelper(this)
+
         btnEntrar.setOnClickListener {
             val usuarioDigitado = etUsuario.text.toString().trim()
             val senhaDigitada = etSenha.text.toString().trim()
 
             tvErroLogin.visibility = View.GONE
 
-            // 1. Validação do Treinador (Acesso Fixo)
-            if (usuarioDigitado == "treinador" && senhaDigitada == "treinador") {
-                val intent = Intent(this, MenuTreinador::class.java)
-                startActivity(intent)
+            // 1. Acesso do Treinador (Fixo)
+            if (usuarioDigitado == "treinador" && senhaDigitada == "123") {
+                startActivity(Intent(this, MenuTreinador::class.java))
                 finish()
                 return@setOnClickListener
             }
 
-            // 2. Validação Dinâmica do Atleta
-            // Procura na nossa memória algum atleta que combine com a regra (Primeiro Nome + Idade)
-            val atletaEncontrado = DadosGlobais.listaAtletas.find { atleta ->
+            // 2. Acesso Dinâmico do Atleta no SQLite
+            val db = DatabaseHelper(this)
+            val todosAtletas = db.listarAtletas()
 
-                // Pega apenas o primeiro nome (ex: de "Cauã Silva", pega "Cauã")
-                val primeiroNome = atleta.nome.split(" ")[0]
+            val atletaEncontrado = todosAtletas.find { atleta ->
+                // Remove todos os espaços do nome completo (ex: "Cauã Silva Santos" -> "cauasilvasantos")
+                val usuarioEsperado = atleta.nome.replace(" ", "").lowercase()
 
-                // Cria a senha esperada (ex: "Cauã18")
-                val senhaEsperada = "$primeiroNome${atleta.idade}"
+                // Cria a senha (ex: "cauasilvasantos18")
+                val senhaEsperada = "${usuarioEsperado}${atleta.idade}"
 
-                // Compara ignorando maiúsculas e minúsculas (ignoreCase = true)
-                usuarioDigitado.equals(primeiroNome, ignoreCase = true) &&
-                        senhaDigitada.equals(senhaEsperada, ignoreCase = true)
+                // Compara ignorando maiúsculas e minúsculas
+                usuarioDigitado.lowercase() == usuarioEsperado &&
+                        senhaDigitada.lowercase() == senhaEsperada
             }
 
-            // 3. Resultado do Login
+            // 3. Redirecionamento ou Erro
             if (atletaEncontrado != null) {
-                // Sucesso! Envia o ID deste atleta específico para a próxima tela
                 val intent = Intent(this, MenuAtleta::class.java)
                 intent.putExtra("ATLETA_ID", atletaEncontrado.id)
                 startActivity(intent)
                 finish()
             } else {
-                // RF04 - Recusar acesso e mostrar erro
                 tvErroLogin.visibility = View.VISIBLE
             }
         }

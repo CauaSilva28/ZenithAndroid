@@ -7,12 +7,14 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
 class PerfilAtleta : AppCompatActivity() {
 
     private var idDoAtletaAtual: String = ""
     private lateinit var containerTreinos: LinearLayout
+    private lateinit var db: DatabaseHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,10 +28,14 @@ class PerfilAtleta : AppCompatActivity() {
             return
         }
 
-        val atleta = DadosGlobais.buscarAtletaPorId(idDoAtletaAtual)
+        // Instancia o banco SQLite
+        db = DatabaseHelper(this)
+
+        // Busca o atleta direto do banco
+        val atleta = db.buscarAtletaPorId(idDoAtletaAtual)
 
         if (atleta == null) {
-            Toast.makeText(this, "Erro: Dados do atleta perdidos.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Erro: Dados do atleta não encontrados no banco.", Toast.LENGTH_SHORT).show()
             finish()
             return
         }
@@ -39,6 +45,10 @@ class PerfilAtleta : AppCompatActivity() {
         val tvIdadeSexo = findViewById<TextView>(R.id.tvIdadeSexo)
         val tvPesoAltura = findViewById<TextView>(R.id.tvPesoAltura)
         val tvPosicao = findViewById<TextView>(R.id.tvPosicao)
+
+        // Novas TextViews de Acesso
+        val tvUsuarioAtleta = findViewById<TextView>(R.id.tvUsuarioAtleta)
+        val tvSenhaAtleta = findViewById<TextView>(R.id.tvSenhaAtleta)
 
         val btnVoltar = findViewById<Button>(R.id.btnVoltarPerfil)
         val btnNovoTreino = findViewById<Button>(R.id.btnNovoTreino)
@@ -52,6 +62,14 @@ class PerfilAtleta : AppCompatActivity() {
         tvPesoAltura.text = "Peso: ${atleta.peso} kg | Altura: ${atleta.altura} m"
         tvPosicao.text = "Especialidade: ${atleta.posicao}"
 
+        // Gera as credenciais com base na regra de Login (Nome sem espaços + Idade)
+        val usuarioFormatado = atleta.nome.replace(" ", "").lowercase()
+        val senhaFormatada = "${usuarioFormatado}${atleta.idade}"
+
+        // Exibe no perfil para o treinador
+        tvUsuarioAtleta.text = "Usuário: $usuarioFormatado"
+        tvSenhaAtleta.text = "Senha: $senhaFormatada"
+
         btnVoltar.setOnClickListener { finish() }
 
         btnNovoTreino.setOnClickListener {
@@ -60,33 +78,27 @@ class PerfilAtleta : AppCompatActivity() {
             startActivity(intent)
         }
 
+        // Excluir Atleta com Confirmação via SQLite (RF08)
         btnExcluirAtleta.setOnClickListener {
-            // Cria a caixa de diálogo de confirmação
-            val builder = androidx.appcompat.app.AlertDialog.Builder(this)
+            val builder = AlertDialog.Builder(this)
             builder.setTitle("Excluir Atleta")
-            builder.setMessage("Tem certeza que deseja excluir ${atleta.nome}? Todos os treinos vinculados também serão perdidos.")
+            builder.setMessage("Tem certeza que deseja excluir ${atleta.nome}? Todos os treinos vinculados também serão apagados.")
 
-            builder.setPositiveButton("Sim, excluir") { dialog, which ->
-                // 1. Remove os treinos associados a este atleta
-                DadosGlobais.listaTreinos.removeAll { it.idAtleta == idDoAtletaAtual }
-
-                // 2. Remove o próprio atleta da lista
-                DadosGlobais.listaAtletas.removeAll { it.id == idDoAtletaAtual }
-
+            builder.setPositiveButton("Sim, excluir") { _, _ ->
+                // O ON DELETE CASCADE do SQLite exclui treinos e exercícios automaticamente
+                db.excluirAtleta(idDoAtletaAtual)
                 Toast.makeText(this, "Atleta excluído.", Toast.LENGTH_SHORT).show()
-                finish() // Fecha o perfil e volta para a lista do treinador
+                finish()
             }
 
-            builder.setNegativeButton("Cancelar") { dialog, which ->
-                dialog.dismiss() // Apenas fecha o alerta
+            builder.setNegativeButton("Cancelar") { dialog, _ ->
+                dialog.dismiss()
             }
 
-            // Personaliza a cor do alerta para não ficar com o branco padrão se quiser, ou apenas exibe
             builder.show()
         }
     }
 
-    // Usamos o onResume para atualizar a lista sempre que voltarmos do ecrã de "Criar Treino"
     override fun onResume() {
         super.onResume()
         if (idDoAtletaAtual.isNotEmpty()) {
@@ -95,11 +107,10 @@ class PerfilAtleta : AppCompatActivity() {
     }
 
     private fun atualizarListaDeTreinos() {
-        // Limpar a lista atual para não duplicar itens
         containerTreinos.removeAllViews()
 
-        // Filtrar no nosso banco de dados apenas os treinos que pertencem a ESTE atleta
-        val treinosDoAtleta = DadosGlobais.listaTreinos.filter { it.idAtleta == idDoAtletaAtual }
+        // Busca a lista de treinos deste atleta vinda do SQLite
+        val treinosDoAtleta = db.listarTreinosDoAtleta(idDoAtletaAtual)
 
         if (treinosDoAtleta.isEmpty()) {
             val tvVazio = TextView(this)
@@ -122,7 +133,6 @@ class PerfilAtleta : AppCompatActivity() {
             tvTitulo.text = treino.titulo
             tvData.text = "Data: ${treino.data}"
 
-            // Ajusta o estilo visual dependendo de o treino estar concluído ou não
             if (treino.concluido) {
                 tvStatus.text = "Concluído"
                 tvStatus.setTextColor(android.graphics.Color.parseColor("#050505"))
@@ -133,10 +143,9 @@ class PerfilAtleta : AppCompatActivity() {
                 tvStatus.setBackgroundColor(android.graphics.Color.parseColor("#2D3A0A"))
             }
 
-            // Ação de clique no treino (Abre o Detalhe)
             viewCartaoTreino.setOnClickListener {
                 val intent = Intent(this, DetalheTreino::class.java)
-                intent.putExtra("TREINO_ID", treino.id) // Passa o ID deste treino específico
+                intent.putExtra("TREINO_ID", treino.id)
                 startActivity(intent)
             }
 

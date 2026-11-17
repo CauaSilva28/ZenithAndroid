@@ -27,6 +27,9 @@ class CadastroAtleta : AppCompatActivity() {
             finish()
         }
 
+        val db = DatabaseHelper(this)
+
+        // Ação do botão de Salvar
         btnSalvar.setOnClickListener {
             val nome = etNome.text.toString().trim()
             val idade = etIdade.text.toString().trim()
@@ -34,20 +37,41 @@ class CadastroAtleta : AppCompatActivity() {
             val altura = etAltura.text.toString().trim()
             val posicao = etPosicao.text.toString().trim()
 
-            // Verifica qual o botão de rádio selecionado
             val sexo = when (rgSexo.checkedRadioButtonId) {
                 R.id.rbMasculino -> "Masculino"
                 R.id.rbFeminino -> "Feminino"
                 else -> ""
             }
 
-            // Validação de campos vazios
+            // 1. Validação de campos vazios
             if (nome.isEmpty() || idade.isEmpty() || peso.isEmpty() || altura.isEmpty() || posicao.isEmpty() || sexo.isEmpty()) {
                 Toast.makeText(this, "Por favor, preencha todos os campos.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // 1. Cria o objeto do Atleta com os dados digitados
+            // 2. Validação de Nome + Sobrenome (pelo menos 2 palavras)
+            val partesDoNome = nome.split(" ").filter { it.isNotEmpty() }
+            if (partesDoNome.size < 2) {
+                Toast.makeText(this, "Por favor, insira o nome e sobrenome (nome e sobrenome).", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+
+            // 3. Verificação de Duplicidade no SQLite
+            val todosAtletas = db.listarAtletas()
+            val jaExiste = todosAtletas.any { atletaExistente ->
+                atletaExistente.nome.equals(nome, ignoreCase = true) && atletaExistente.idade == idade
+            }
+
+            if (jaExiste) {
+                Toast.makeText(
+                    this,
+                    "Já existe um atleta cadastrado com o nome '$nome' e $idade anos!",
+                    Toast.LENGTH_LONG
+                ).show()
+                return@setOnClickListener
+            }
+
+            // 4. Salvar novo atleta no banco local
             val novoAtleta = Atleta(
                 nome = nome,
                 idade = idade,
@@ -57,16 +81,9 @@ class CadastroAtleta : AppCompatActivity() {
                 sexo = sexo
             )
 
-            // 2. Salva no nosso banco de dados em memória
-            DadosGlobais.adicionarAtleta(novoAtleta)
+            db.inserirAtleta(novoAtleta)
 
-            // 3. Mostra a mensagem de sucesso e fecha a tela
-            Toast.makeText(this, "Atleta $nome cadastrado com sucesso!", Toast.LENGTH_LONG).show()
-            finish()
-
-            Toast.makeText(this, "Atleta $nome cadastrado com sucesso!", Toast.LENGTH_LONG).show()
-
-            // Após salvar, fechamos o formulário
+            Toast.makeText(this, "Atleta $nome cadastrado com sucesso!", Toast.LENGTH_SHORT).show()
             finish()
         }
     }

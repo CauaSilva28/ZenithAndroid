@@ -14,7 +14,7 @@ class CriarTreino : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_criar_treino)
 
-        // Recebe o ID do atleta passado pelo ecrã anterior (PerfilAtleta)
+        // Recebe o ID do atleta passado pela tela anterior (PerfilAtleta)
         idAtleta = intent.getStringExtra("ATLETA_ID") ?: ""
 
         if (idAtleta.isEmpty()) {
@@ -44,12 +44,13 @@ class CriarTreino : AppCompatActivity() {
             val exerciciosTexto = etExercicios.text.toString().trim()
             val observacoes = etObservacoes.text.toString().trim()
 
-            // Validação
+            // Validação de campos obrigatórios
             if (titulo.isEmpty() || data.isEmpty() || exerciciosTexto.isEmpty()) {
                 Toast.makeText(this, "Preencha o título, a data e os exercícios.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
+            // Converte o texto com quebras de linha em uma lista de strings limpa
             val listaDeExercicios = exerciciosTexto.split("\n")
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
@@ -59,21 +60,26 @@ class CriarTreino : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Criar o objeto Treino (baseado na estrutura do nosso DadosGlobais.kt)
+            // Criar objeto e salvar no SQLite
+            val db = DatabaseHelper(this)
             val novoTreino = Treino(
                 idAtleta = idAtleta,
                 titulo = titulo,
                 data = data,
                 exercicios = listaDeExercicios,
-                concluido = false, // O atleta ainda não fez o treino
+                concluido = false,
                 observacoes = observacoes
             )
 
-            // Guardar no banco de dados temporário
-            DadosGlobais.listaTreinos.add(novoTreino)
+            // Valida se a transação do banco inseriu o treino e os exercícios com sucesso
+            val salvouComSucesso = db.inserirTreino(novoTreino)
 
-            Toast.makeText(this, "Treino criado com sucesso!", Toast.LENGTH_SHORT).show()
-            finish() // Fecha o ecrã e regressa ao Perfil do Atleta
+            if (salvouComSucesso) {
+                Toast.makeText(this, "Treino criado com sucesso!", Toast.LENGTH_SHORT).show()
+                finish() // Fecha a tela e regressa ao Perfil do Atleta
+            } else {
+                Toast.makeText(this, "Erro ao salvar o treino no banco de dados.", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

@@ -41,11 +41,12 @@ class MenuTreinador : AppCompatActivity() {
     }
 
     private fun atualizarListaAtletas() {
-        // 1. Limpar a lista atual para não duplicar os cartões ao voltar do ecrã de registo
         containerAtletas.removeAllViews()
 
-        // 2. Verificar se o banco de dados temporário está vazio
-        if (DadosGlobais.listaAtletas.isEmpty()) {
+        val db = DatabaseHelper(this)
+        val atletas = db.listarAtletas()
+
+        if (atletas.isEmpty()) {
             val tvVazio = TextView(this)
             tvVazio.text = "Ainda não tem atletas cadastrados."
             tvVazio.setTextColor(android.graphics.Color.parseColor("#AAAAAA"))
@@ -54,29 +55,22 @@ class MenuTreinador : AppCompatActivity() {
             return
         }
 
-        // 3. Preparar o "Inflador" de XML
         val inflater = LayoutInflater.from(this)
 
-        // 4. Percorrer a lista de atletas do DadosGlobais
-        for (atleta in DadosGlobais.listaAtletas) {
-
+        for (atleta in atletas) {
             val viewCartao = inflater.inflate(R.layout.item_atleta, containerAtletas, false)
-
             val tvNome = viewCartao.findViewById<TextView>(R.id.tvNomeItemAtleta)
             val tvDetalhes = viewCartao.findViewById<TextView>(R.id.tvDetalhesItemAtleta)
 
             tvNome.text = atleta.nome
             tvDetalhes.text = "Idade: ${atleta.idade} anos | Posição: ${atleta.posicao}"
 
-            // 5. Ação de clique no cartão (Para cumprir o RF10)
             viewCartao.setOnClickListener {
-                // Passa o ID do atleta clicado para a tela de Perfil
                 val intent = Intent(this, PerfilAtleta::class.java)
                 intent.putExtra("ATLETA_ID", atleta.id)
                 startActivity(intent)
             }
 
-            // 6. Adiciona o cartão finalizado ao contentor do ScrollView
             containerAtletas.addView(viewCartao)
         }
     }
